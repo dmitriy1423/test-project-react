@@ -12,7 +12,7 @@ import PostList from '../components/PostList';
 import PostFilter from '../components/PostFilter';
 import Pagination from '../components/UI/pagination/Pagination';
 import Loader from '../components/UI/Loader/Loader';
-/* import { useObserver } from '../hooks/useObserver'; */
+import { useObserver } from '../hooks/useObserver';
 
 function Posts() {
     const [posts, setPosts] = useState([]);
@@ -22,18 +22,18 @@ function Posts() {
     const [limit, setLimit] = useState(10);
     const [page, setPage] = useState(1);
     const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
-    /* const lastElement = useRef(); */
+    const lastElement = useRef();
 
     const [fetchPosts, isPostsLoading, postError] = useFetching(async (limit, page) => {
         const response = await PostService.getAll(limit, page);
-        setPosts(response.data);
+        setPosts([...posts, ...response.data]);
         const totalCount = response.headers['x-total-count'];
         setTotalPages(getPageCount(totalCount, limit));
     });
 
-   /*  useObserver(lastElement, page < totalPages, isPostsLoading, () => {
+    useObserver(lastElement, page < totalPages, isPostsLoading, () => {
         setPage(page + 1);
-    }); */
+    });
 
     useEffect(() => {
         fetchPosts(limit, page);
@@ -70,29 +70,17 @@ function Posts() {
                     {value: 5, name: '5'},
                     {value: 10, name: '10'},
                     {value: 25, name: '25'},
-                    {value: -1, name: 'Показать все'}
+                    {value: totalPages * limit, name: 'Показать все'}
                 ]}
             />
             {postError && 
                 <h1>Ошибка ${postError}</h1>
             }
             <PostList remove={removePost} posts={sortedAndSearchedPosts} title={"Посты про JS"}/>
-            {/* <div ref={lastElement} style={{height: '20px', background: 'red'}}></div> */}
+            <div ref={lastElement} style={{height: '20px', background: 'red'}}></div>
             {isPostsLoading && 
                 <div style={{display: 'flex', justifyContent: 'center', marginTop: '50px'}}><Loader /></div>
             }
-            {/* {(page !== limit) &&
-                <Pagination 
-                    totalPages={totalPages}
-                    page={page}
-                    changePage={changePage}
-                />
-            } */}
-            <Pagination 
-                totalPages={totalPages}
-                page={page}
-                changePage={changePage}
-            />
         </div>
     );
 }
